@@ -51,3 +51,15 @@ python app.py
 - `admin / admin123`
 
 > Важно: это **специально уязвимый** учебный стенд для лабораторных работ по AppSec/SAST/DAST.
+
+## Ошибка `cannot import name 'soft_unicode' from markupsafe`
+Если при запуске возникает ошибка вида:
+`ImportError: cannot import name 'soft_unicode' from 'markupsafe'`,
+значит установилась несовместимая версия `MarkupSafe` для старой ветки `Jinja2`.
+
+Исправление:
+```bash
+pip install -r requirements.txt --upgrade --force-reinstall
+```
+
+В этом репозитории `MarkupSafe` уже зафиксирован как `1.1.1`, что совместимо с `Jinja2==2.11.3`.

@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="card">
+  <h2>Admin SQL Console</h2>
+  <p>Выполнение SQL напрямую (для демонстрации)</p>
+  <form method="post" action="/admin/sql">
+    <textarea name="query" rows="5">{{ query }}</textarea>
+    <button class="btn" type="submit">Run</button>
+  </form>
+</div>
+
+<table>
+  <tr><th>Result</th></tr>
+  {% for r in rows %}
+  <tr><td>{{ r|safe }}</td></tr>
+  {% endfor %}
+</table>
+{% endblock %}

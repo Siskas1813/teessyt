@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="card">
+  <h2>Новое письмо</h2>
+  <form method="post" action="/compose">
+    <label>Кому</label>
+    <input class="input" name="recipient" type="text" placeholder="employee or manager">
+
+    <label>Копия</label>
+    <input class="input" name="cc" type="text" placeholder="cc recipients">
+
+    <label>Тема</label>
+    <input class="input" name="subject" type="text" placeholder="subject">
+
+    <label>Текст</label>
+    <textarea name="body" rows="10" placeholder="message"></textarea>
+
+    <button class="btn" type="submit">Отправить</button>
+  </form>
+</div>
+{% endblock %}

@@ -1,9 +1,8 @@
-# Совместимые версии для запуска учебного стенда на современных окружениях.
-# При этом зависимости остаются намеренно устаревшими для учебных задач AppSec.
-Flask==1.1.4
-Jinja2==2.11.3
-Werkzeug==1.0.1
-itsdangerous==1.1.0
-click==7.1.2
-MarkupSafe==1.1.1
-PyYAML==5.3.1
+# Runtime-compatible stack (Python 3.11/3.12 friendly)
+Flask==3.0.3
+Jinja2==3.1.4
+Werkzeug==3.0.3
+itsdangerous==2.2.0
+click==8.1.7
+MarkupSafe==2.1.5
+PyYAML==6.0.1

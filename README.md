@@ -27,8 +27,9 @@
    - выполнение произвольного SQL в `/admin/sql`;
    - небезопасная десериализация `pickle.load` при загрузке `.pkl`;
    - Directory Traversal в `/download`.
-3. **Уязвимые/устаревшие зависимости**
-   - зафиксированы старые версии библиотек в `requirements.txt`.
+3. **Уязвимые/устаревшие зависимости (опционально для лабораторных)**
+   - добавлен `requirements-vulnerable.txt` со старыми версиями для демонстрации dependency-сканеров;
+   - основной `requirements.txt` оставлен совместимым с Python 3.12 для стабильного запуска стенда.
 4. **Чувствительные данные в коде**
    - `SECRET_KEY`, SMTP/JWT ключи, API key в сидируемых данных.
 5. **Небезопасный API-дизайн**
@@ -52,14 +53,17 @@ python app.py
 
 > Важно: это **специально уязвимый** учебный стенд для лабораторных работ по AppSec/SAST/DAST.
 
-## Ошибка `cannot import name 'soft_unicode' from markupsafe`
-Если при запуске возникает ошибка вида:
-`ImportError: cannot import name 'soft_unicode' from 'markupsafe'`,
-значит установилась несовместимая версия `MarkupSafe` для старой ветки `Jinja2`.
+## Ошибка `AttributeError: module 'ast' has no attribute 'Str'`
+Эта ошибка обычно появляется на Python 3.12 при установке старого `Werkzeug`/`Flask` стека.
 
 Исправление:
 ```bash
 pip install -r requirements.txt --upgrade --force-reinstall
 ```
 
-В этом репозитории `MarkupSafe` уже зафиксирован как `1.1.1`, что совместимо с `Jinja2==2.11.3`.
+Если для лабораторной нужно именно сканировать устаревшие зависимости, используйте отдельно:
+```bash
+pip install -r requirements-vulnerable.txt
+```
+
+> `requirements-vulnerable.txt` может быть несовместим с современными версиями Python (например 3.12).

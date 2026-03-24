@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="card">
+  <h2>Центр вложений</h2>
+  <form method="post" action="/attachments" enctype="multipart/form-data">
+    <label>ID письма</label>
+    <input class="input" type="text" name="mail_id" value="1">
+    <input class="input" type="file" name="attachment">
+    <button class="btn" type="submit">Загрузить файл</button>
+  </form>
+</div>
+
+<table>
+  <tr><th>ID</th><th>Письмо</th><th>Имя файла</th><th>Путь</th><th>Загрузил</th></tr>
+  {% for i in items %}
+  <tr>
+    <td>{{ i.id }}</td>
+    <td>{{ i.mail_id }}</td>
+    <td>{{ i.filename|safe }}</td>
+    <td>{{ i.storage_path }}</td>
+    <td>{{ i.uploader }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% endblock %}

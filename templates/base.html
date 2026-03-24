@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Corp Mail</title>
+  <style>
+    body {font-family: Arial, sans-serif; margin: 0; background: #f4f6fb;}
+    .header {background: #1f3c88; color: #fff; padding: 12px 18px; display:flex; justify-content:space-between;}
+    .layout {display:flex; min-height: calc(100vh - 50px);}
+    .sidebar {width: 220px; background:#fff; padding:14px; border-right:1px solid #d7dceb;}
+    .content {flex:1; padding:18px;}
+    a {text-decoration:none; color:#1f3c88;}
+    .card {background:#fff; border:1px solid #d7dceb; border-radius:8px; padding:12px; margin-bottom:12px;}
+    table {width:100%; border-collapse: collapse; background: #fff;}
+    th, td {border: 1px solid #d7dceb; padding: 8px; text-align: left;}
+    .btn {padding:8px 10px; border:0; border-radius:5px; background:#1f3c88; color:#fff; cursor:pointer;}
+    .input, textarea {width:100%; padding:8px; margin:6px 0; border:1px solid #bec6de; border-radius:4px;}
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div><strong>Corp Mail Enterprise</strong></div>
+    <div>
+      {% if session.get('username') %}
+      {{ session.get('full_name') }} ({{ session.get('department') }}) |
+      <a style="color:#fff" href="/logout">Выйти</a>
+      {% endif %}
+    </div>
+  </div>
+  <div class="layout">
+    {% if session.get('username') %}
+    <aside class="sidebar">
+      <p><strong>Почта</strong></p>
+      <p><a href="/dashboard">Входящие</a></p>
+      <p><a href="/compose">Новое письмо</a></p>
+      <p><a href="/attachments">Вложения</a></p>
+      <hr>
+      <form method="get" action="/search">
+        <input class="input" type="text" name="q" placeholder="Поиск по письмам">
+        <button class="btn" type="submit">Искать</button>
+      </form>
+      {% if session.get('role') == 'admin' %}
+      <hr>
+      <p><strong>Admin</strong></p>
+      <p><a href="/admin/users">Пользователи</a></p>
+      <p><a href="/admin/sql">SQL Console</a></p>
+      {% endif %}
+    </aside>
+    {% endif %}
+    <main class="content">
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</body>
+</html>

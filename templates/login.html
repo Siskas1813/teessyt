@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Corp Mail Login</title>
+  <style>
+    body {font-family: Arial, sans-serif; background: #eef2fb;}
+    .box {width: 360px; margin: 120px auto; background:#fff; border:1px solid #d7dceb; border-radius:8px; padding:18px;}
+    .input {width:100%; padding:8px; margin:8px 0;}
+    .btn {width:100%; padding:10px; background:#1f3c88; color:#fff; border:none; border-radius:5px;}
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h2>Corp Mail Enterprise</h2>
+    <p>Вход в корпоративный почтовый сервис</p>
+    <form method="post" action="/login">
+      <input class="input" type="text" name="username" placeholder="username">
+      <input class="input" type="password" name="password" placeholder="password">
+      <button class="btn" type="submit">Войти</button>
+    </form>
+    <small>Demo users: employee / manager / admin</small>
+  </div>
+</body>
+</html>

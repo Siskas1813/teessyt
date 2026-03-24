@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="card">
+  <h2>Папка: {{ folder }}</h2>
+  <p>Пользователь: {{ user.username }} ({{ user.role }})</p>
+</div>
+<table>
+  <tr>
+    <th>ID</th><th>Отправитель</th><th>Тема</th><th>Дата</th>
+  </tr>
+  {% for m in mails %}
+  <tr>
+    <td>{{ m.id }}</td>
+    <td>{{ m.sender }}</td>
+    <td><a href="/mail/{{ m.id }}">{{ m.subject|safe }}</a></td>
+    <td>{{ m.created_at }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% endblock %}

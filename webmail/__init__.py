@@ -12,16 +12,11 @@ def create_app() -> Flask:
     template_dir = os.path.join(base_dir, 'templates')
     static_dir = os.path.join(base_dir, 'static')
 
-    # Явно указываем каталоги шаблонов/статики, чтобы корректно работать
-    # при запуске из package-контекста (webmail) и на Windows путях.
     app = Flask(__name__, template_folder=template_dir, static_folder=static_dir)
 
-    # Преднамеренно небезопасно: секреты и инфраструктурные данные в коде
-    app.config['SECRET_KEY'] = 'corp-mail-super-secret-key'
+    app.config['SECRET_KEY'] = os.getenv('APP_SECRET_KEY', 'dev-secret-change-me')
     app.config['DB_PATH'] = os.path.join(base_dir, 'corp_mail.db')
     app.config['UPLOAD_DIR'] = os.path.join(base_dir, 'uploads')
-    app.config['JWT_SIGNING_KEY'] = 'jwt-dev-key-unsafe'
-    app.config['SMTP_PASSWORD'] = 'smtp_password_plaintext'
 
     init_db(app.config['DB_PATH'])
     seed_data(app.config['DB_PATH'])

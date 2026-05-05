@@ -1,19 +1,19 @@
 {% extends 'base.html' %}
 {% block content %}
 <div class="card">
-  <h2>{{ mail.subject|safe }}</h2>
+  <h2>{{ mail.subject }}</h2>
   <p><strong>От:</strong> {{ mail.sender }}</p>
   <p><strong>Кому:</strong> {{ mail.recipient }}</p>
   <p><strong>CC:</strong> {{ mail.cc }}</p>
   <hr>
-  <div>{{ mail.body|safe }}</div>
+  <div>{{ mail.body }}</div>
 </div>
 
 <div class="card">
   <h3>Вложения</h3>
   <ul>
     {% for a in attachments %}
-    <li>{{ a.filename }} - <a href="/download?path={{ a.storage_path }}">Скачать</a></li>
+    <li>{{ a.filename }} - <a href="/download/{{ a.storage_path }}">Скачать</a></li>
     {% endfor %}
   </ul>
 </div>

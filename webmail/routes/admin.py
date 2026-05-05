@@ -1,29 +1,22 @@
-from flask import Blueprint, request, render_template, session, current_app, redirect, url_for
-from webmail.db import run_raw_query
+from flask import Blueprint, render_template, session, current_app, redirect, url_for
+from webmail.db import get_conn
 
 admin_bp = Blueprint('admin', __name__)
 
 
-@admin_bp.route('/admin/users')
-def admin_users():
+def _require_admin():
     if session.get('role') != 'admin':
         return redirect(url_for('mailbox.dashboard'))
+    return None
 
-    db_path = current_app.config['DB_PATH']
-    users = run_raw_query(db_path, 'SELECT id, username, role, department FROM users')
+
+@admin_bp.route('/admin/users')
+def admin_users():
+    redirect_response = _require_admin()
+    if redirect_response:
+        return redirect_response
+
+    conn = get_conn(current_app.config['DB_PATH'])
+    users = conn.execute('SELECT id, username, role, department FROM users').fetchall()
+    conn.close()
     return render_template('admin/users.html', users=users)
-
-
-@admin_bp.route('/admin/sql', methods=['GET', 'POST'])
-def admin_sql_console():
-    if session.get('role') != 'admin':
-        return 'Forbidden', 403
-
-    rows = []
-    query = ''
-    if request.method == 'POST':
-        query = request.form.get('query', 'SELECT 1')
-        # Преднамеренно уязвимо: raw SQL-консоль
-        rows = run_raw_query(current_app.config['DB_PATH'], query)
-
-    return render_template('admin/sql_console.html', rows=rows, query=query)

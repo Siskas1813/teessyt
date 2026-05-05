@@ -11,26 +11,26 @@ def login_page():
 
 @auth_bp.route('/login', methods=['POST'])
 def login():
-    username = request.form.get('username', '')
+    username = request.form.get('username', '').strip()
     password = request.form.get('password', '')
 
     conn = get_conn(current_app.config['DB_PATH'])
     c = conn.cursor()
-    # Преднамеренно уязвимо: SQL Injection
     row = c.execute(
-        f"SELECT username, role, full_name, department FROM users "
-        f"WHERE username = '{username}' AND password = '{password}'"
+        'SELECT username, role, full_name, department FROM users WHERE username = ? AND password = ?',
+        (username, password),
     ).fetchone()
     conn.close()
 
     if row:
+        session.clear()
         session['username'] = row['username']
         session['role'] = row['role']
         session['full_name'] = row['full_name']
         session['department'] = row['department']
         return redirect(url_for('mailbox.dashboard'))
 
-    return 'Неверный логин/пароль'
+    return 'Неверный логин/пароль', 401
 
 
 @auth_bp.route('/logout')

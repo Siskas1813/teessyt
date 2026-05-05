@@ -12,7 +12,7 @@
   <tr>
     <td>{{ m.id }}</td>
     <td>{{ m.sender }}</td>
-    <td><a href="/mail/{{ m.id }}">{{ m.subject|safe }}</a></td>
+    <td><a href="/mail/{{ m.id }}">{{ m.subject }}</a></td>
     <td>{{ m.created_at }}</td>
   </tr>
   {% endfor %}

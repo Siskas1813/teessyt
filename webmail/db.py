@@ -14,7 +14,7 @@ def init_db(db_path: str):
         '''
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY,
-            username TEXT,
+            username TEXT UNIQUE,
             password TEXT,
             full_name TEXT,
             department TEXT,
@@ -52,7 +52,7 @@ def init_db(db_path: str):
         CREATE TABLE IF NOT EXISTS api_keys (
             id INTEGER PRIMARY KEY,
             owner TEXT,
-            api_key TEXT,
+            api_key TEXT UNIQUE,
             scope TEXT,
             expires_at TEXT
         );
@@ -68,35 +68,26 @@ def seed_data(db_path: str):
 
     c.execute('SELECT COUNT(*) FROM users')
     if c.fetchone()[0] == 0:
-        c.executescript(
-            '''
-            INSERT INTO users (username, password, full_name, department, role, signature)
-            VALUES
-            ('employee', 'employee123', 'Иван Петров', 'Finance', 'user', 'Sent from Corp Mail'),
-            ('manager', 'manager123', 'Ольга Романова', 'Operations', 'manager', 'Regards, Manager'),
-            ('admin', 'admin123', 'Security Admin', 'IT', 'admin', 'SecOps');
-
-            INSERT INTO mails (sender, recipient, cc, subject, body, status, created_at)
-            VALUES
-            ('ceo@corp.local', 'employee', 'manager', 'Q1 Report', 'Подготовьте отчёт за квартал', 'inbox', datetime('now')),
-            ('hr@corp.local', 'employee', '', 'Policies update', 'Ознакомьтесь с обновлением политик', 'inbox', datetime('now')),
-            ('employee', 'manager', '', 'Черновик бюджета', 'Отправляю черновик', 'sent', datetime('now'));
-
-            INSERT INTO api_keys (owner, api_key, scope, expires_at)
-            VALUES
-            ('integration-bot', 'corp-mail-key-unsafe-001', 'mail:read mail:send admin:read', '2099-12-31');
-            '''
+        c.executemany(
+            'INSERT INTO users (username, password, full_name, department, role, signature) VALUES (?, ?, ?, ?, ?, ?)',
+            [
+                ('employee', 'employee123', 'Иван Петров', 'Finance', 'user', 'Sent from Corp Mail'),
+                ('manager', 'manager123', 'Ольга Романова', 'Operations', 'manager', 'Regards, Manager'),
+                ('admin', 'admin123', 'Security Admin', 'IT', 'admin', 'SecOps'),
+            ],
+        )
+        c.executemany(
+            'INSERT INTO mails (sender, recipient, cc, subject, body, status, created_at) VALUES (?, ?, ?, ?, ?, ?, datetime(\'now\'))',
+            [
+                ('ceo@corp.local', 'employee', 'manager', 'Q1 Report', 'Подготовьте отчёт за квартал', 'inbox'),
+                ('hr@corp.local', 'employee', '', 'Policies update', 'Ознакомьтесь с обновлением политик', 'inbox'),
+                ('employee', 'manager', '', 'Черновик бюджета', 'Отправляю черновик', 'sent'),
+            ],
+        )
+        c.execute(
+            'INSERT INTO api_keys (owner, api_key, scope, expires_at) VALUES (?, ?, ?, ?)',
+            ('integration-bot', 'corp-mail-demo-key-001', 'mail:read', '2099-12-31'),
         )
 
     conn.commit()
     conn.close()
-
-
-def run_raw_query(db_path: str, query: str):
-    """Преднамеренно уязвимо: выполнение произвольного SQL из строки."""
-    conn = get_conn(db_path)
-    c = conn.cursor()
-    rows = c.execute(query).fetchall()
-    conn.commit()
-    conn.close()
-    return rows

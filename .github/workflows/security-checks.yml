@@ -1,0 +1,82 @@
+name: Security checks
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  security:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install project dependencies and security tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install semgrep bandit pip-audit detect-secrets
+
+      - name: Create reports directory
+        run: |
+          mkdir -p reports/ci
+
+      - name: Run Semgrep SAST
+        run: |
+          semgrep scan --config p/python --config p/default \
+            --exclude ".venv" \
+            --exclude "uploads" \
+            --exclude "corp_mail.db" \
+            --json \
+            --output reports/ci/semgrep-ci.json .
+        continue-on-error: true
+
+      - name: Run Bandit Python security scan
+        run: |
+          bandit -r . \
+            -x ".venv,uploads" \
+            -f json \
+            -o reports/ci/bandit-ci.json
+        continue-on-error: true
+
+      - name: Run pip-audit SCA
+        run: |
+          pip-audit -r requirements.txt \
+            --format json \
+            --progress-spinner off \
+            --output reports/ci/pipaudit-ci.json
+        continue-on-error: true
+
+      - name: Run detect-secrets
+        run: |
+          detect-secrets scan > reports/ci/detect-secrets-ci.json
+        continue-on-error: true
+
+      - name: Start web application for DAST
+        run: |
+          python app.py > reports/ci/app.log 2>&1 &
+          sleep 10
+
+      - name: Run OWASP ZAP baseline scan
+        run: |
+          docker run --network host \
+            -v ${{ github.workspace }}/reports/ci:/zap/wrk/:rw \
+            ghcr.io/zaproxy/zaproxy:stable \
+            zap-baseline.py \
+            -t http://127.0.0.1:5000 \
+            -r zap-ci.html \
+            -J zap-ci.json
+        continue-on-error: true
+
+      - name: Upload security reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-reports
+          path: reports/ci/

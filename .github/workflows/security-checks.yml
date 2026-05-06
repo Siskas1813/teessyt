@@ -59,7 +59,7 @@ jobs:
           detect-secrets scan > reports/ci/detect-secrets-ci.json
         continue-on-error: true
 
-      - name: Start web application for DAST
+            - name: Start web application for DAST
         run: |
           python app.py > reports/ci/app.log 2>&1 &
           echo $! > reports/ci/app.pid
@@ -69,14 +69,14 @@ jobs:
         run: |
           echo "Checking application availability..."
           for i in {1..30}; do
-            if curl -fsS http://127.0.0.1:5000/login > /dev/null; then
+            if curl -fsS http://127.0.0.1:5000/ > /dev/null; then
               echo "Application is available"
               exit 0
             fi
             echo "Waiting for application... attempt $i"
             sleep 2
           done
-          echo "Application did not start or /login is unavailable"
+          echo "Application did not start or root page is unavailable"
           cat reports/ci/app.log
           exit 1
 
@@ -93,7 +93,7 @@ jobs:
             -v ${{ github.workspace }}/reports/ci:/zap/wrk/:rw \
             ghcr.io/zaproxy/zaproxy:stable \
             zap-baseline.py \
-            -t http://host.docker.internal:5000/login \
+            -t http://host.docker.internal:5000/ \
             -r zap-ci.html \
             -J zap-ci.json \
             -w zap-ci.md

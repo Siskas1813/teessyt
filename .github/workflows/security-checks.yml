@@ -59,7 +59,7 @@ jobs:
           detect-secrets scan > reports/ci/detect-secrets-ci.json
         continue-on-error: true
 
-            - name: Start web application for DAST
+      - name: Start web application for DAST
         run: |
           python app.py > reports/ci/app.log 2>&1 &
           echo $! > reports/ci/app.pid

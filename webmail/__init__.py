@@ -1,13 +1,17 @@
+import os
 from flask import Flask
+
 from .db import init_db, seed_data
 from .routes.auth import auth_bp
 from .routes.mailbox import mailbox_bp
 from .routes.admin import admin_bp
 from .routes.api import api_bp
 
-
 def create_app() -> Flask:
-    app = Flask(__name__)
+    base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+    template_dir = os.path.join(base_dir, 'templates')
+
+    app = Flask(__name__, template_folder=template_dir)
 
     # Преднамеренно небезопасно: секреты и инфраструктурные данные в коде
     app.config['SECRET_KEY'] = 'corp-mail-super-secret-key'

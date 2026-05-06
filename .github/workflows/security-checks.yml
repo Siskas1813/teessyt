@@ -64,15 +64,23 @@ jobs:
           python app.py > reports/ci/app.log 2>&1 &
           sleep 10
 
+      - name: Prepare ZAP report directory permissions
+        run: |
+          mkdir -p reports/ci
+          chmod -R 777 reports/ci
+
       - name: Run OWASP ZAP baseline scan
         run: |
-          docker run --network host \
+          docker run --rm \
+            --user root \
+            --add-host=host.docker.internal:host-gateway \
             -v ${{ github.workspace }}/reports/ci:/zap/wrk/:rw \
             ghcr.io/zaproxy/zaproxy:stable \
             zap-baseline.py \
-            -t http://127.0.0.1:5000 \
+            -t http://host.docker.internal:5000 \
             -r zap-ci.html \
-            -J zap-ci.json
+            -J zap-ci.json \
+            -w zap-ci.md
         continue-on-error: true
 
       - name: Upload security reports

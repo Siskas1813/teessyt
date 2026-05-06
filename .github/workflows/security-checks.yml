@@ -58,6 +58,10 @@ jobs:
         continue-on-error: true
 
       - name: Start web application for DAST
+        env:
+          APP_HOST: 0.0.0.0
+          APP_PORT: 5000
+          APP_DEBUG: false
         run: |
           python app.py > reports/ci/app.log 2>&1 &
           echo $! > reports/ci/app.pid
@@ -77,6 +81,13 @@ jobs:
           echo "Application did not start or root page is unavailable"
           cat reports/ci/app.log
           exit 1
+
+      - name: Check web application availability from Docker
+        run: |
+          docker run --rm \
+            --add-host=host.docker.internal:host-gateway \
+            curlimages/curl:latest \
+            -fsS http://host.docker.internal:5000/
 
       - name: Prepare ZAP report directory permissions
         run: |

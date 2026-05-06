@@ -43,16 +43,14 @@ jobs:
           bandit -r . \
             -x ".venv,uploads" \
             -f json \
-            -o reports/ci/bandit-ci.json
-        continue-on-error: true
+            -o reports/ci/bandit-ci.json || echo "Bandit found issues" > reports/ci/bandit-exit.txt
 
       - name: Run pip-audit SCA
         run: |
           pip-audit -r requirements.txt \
             --format json \
             --progress-spinner off \
-            --output reports/ci/pipaudit-ci.json
-        continue-on-error: true
+            --output reports/ci/pipaudit-ci.json || echo "pip-audit found vulnerabilities" > reports/ci/pipaudit-exit.txt
 
       - name: Run detect-secrets
         run: |
@@ -96,8 +94,7 @@ jobs:
             -t http://host.docker.internal:5000/ \
             -r zap-ci.html \
             -J zap-ci.json \
-            -w zap-ci.md
-        continue-on-error: true
+            -w zap-ci.md || echo "ZAP completed with non-zero exit code" > reports/ci/zap-exit.txt
 
       - name: List generated reports
         if: always()

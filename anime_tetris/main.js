@@ -1,207 +1,215 @@
-// Простая реализация Тетриса на канвасе
-const canvas = document.getElementById('gameCanvas');
-const context = canvas.getContext('2d');
-const blockSize = 30;
-canvas.width = blockSize * 10;
-canvas.height = blockSize * 20;
+const SIZE = 5;
+const TARGET = 4;
 
-const colors = {
-    I: '#00bcd4',
-    J: '#3f51b5',
-    L: '#ff9800',
-    O: '#ffeb3b',
-    S: '#4caf50',
-    T: '#9c27b0',
-    Z: '#f44336'
+const boardEl = document.getElementById('board');
+const hudEl = document.getElementById('hud');
+const logEl = document.getElementById('log');
+const buttons = [...document.querySelectorAll('button[data-action]')];
+
+const state = {
+  turn: 'X',
+  action: 'place',
+  mana: { X: 1, O: 1 },
+  energy: { X: 0, O: 0 },
+  winner: null,
+  selected: null,
+  board: Array.from({ length: SIZE * SIZE }, () => ({
+    owner: null,
+    shield: 0,
+    frozen: 0,
+    cursed: 0,
+    blocked: 0,
+    type: 'normal'
+  }))
 };
 
-const shapes = {
-    I: [[1, 1, 1, 1]],
-    J: [
-        [1, 0, 0],
-        [1, 1, 1]
-    ],
-    L: [
-        [0, 0, 1],
-        [1, 1, 1]
-    ],
-    O: [
-        [1, 1],
-        [1, 1]
-    ],
-    S: [
-        [0, 1, 1],
-        [1, 1, 0]
-    ],
-    T: [
-        [0, 1, 0],
-        [1, 1, 1]
-    ],
-    Z: [
-        [1, 1, 0],
-        [0, 1, 1]
-    ]
-};
+function idx(r, c) { return r * SIZE + c; }
+function rc(i) { return [Math.floor(i / SIZE), i % SIZE]; }
+function enemyOf(p) { return p === 'X' ? 'O' : 'X'; }
+function log(msg) { logEl.innerHTML = `<div>• ${msg}</div>` + logEl.innerHTML; }
 
-function drawMatrix(matrix, offset, color) {
-    context.fillStyle = color;
-    matrix.forEach((row, y) => {
-        row.forEach((value, x) => {
-            if (value) {
-                context.fillRect((x + offset.x) * blockSize,
-                                 (y + offset.y) * blockSize,
-                                 blockSize, blockSize);
-            }
-        });
+function setupSpecialCells() {
+  state.board[idx(0, 0)].type = 'mana';
+  state.board[idx(4, 4)].type = 'mana';
+  state.board[idx(0, 4)].type = 'sanctuary';
+  state.board[idx(4, 0)].type = 'sanctuary';
+  state.board[idx(1, 1)].type = 'portal';
+  state.board[idx(3, 3)].type = 'portal';
+  state.board[idx(2, 4)].type = 'cursed';
+}
+
+function cost(action) {
+  return { place: 0, shield: 1, freeze: 2, burn: 2, dash: 2, assassinate: 3, ultimate: 0, end: 0 }[action] ?? 0;
+}
+
+function canAfford(action) {
+  if (action === 'ultimate') return state.energy[state.turn] >= 7;
+  return state.mana[state.turn] >= cost(action);
+}
+
+function consume(action) {
+  if (action === 'ultimate') state.energy[state.turn] -= 7;
+  else state.mana[state.turn] -= cost(action);
+}
+
+function neighbors(i) {
+  const [r, c] = rc(i);
+  const out = [];
+  [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]].forEach(([dr, dc]) => {
+    const nr = r + dr; const nc = c + dc;
+    if (nr >= 0 && nr < SIZE && nc >= 0 && nc < SIZE) out.push(idx(nr, nc));
+  });
+  return out;
+}
+
+function place(i) {
+  const cell = state.board[i];
+  if (cell.owner || cell.blocked > 0) return false;
+  cell.owner = state.turn;
+  if (cell.type === 'cursed') cell.cursed = 2;
+  if (cell.type === 'mana') state.mana[state.turn] += 1;
+  return true;
+}
+
+function winCheck(player) {
+  const dirs = [[0,1],[1,0],[1,1],[1,-1]];
+  for (let r = 0; r < SIZE; r++) {
+    for (let c = 0; c < SIZE; c++) {
+      for (const [dr, dc] of dirs) {
+        let ok = true;
+        for (let k = 0; k < TARGET; k++) {
+          const nr = r + dr * k, nc = c + dc * k;
+          if (nr < 0 || nr >= SIZE || nc < 0 || nc >= SIZE) { ok = false; break; }
+          const cell = state.board[idx(nr, nc)];
+          if (cell.owner !== player || cell.cursed > 0) { ok = false; break; }
+        }
+        if (ok) return true;
+      }
+    }
+  }
+  return false;
+}
+
+function endTurn() {
+  state.board.forEach(cell => {
+    cell.frozen = Math.max(0, cell.frozen - 1);
+    cell.blocked = Math.max(0, cell.blocked - 1);
+    cell.cursed = Math.max(0, cell.cursed - 1);
+  });
+  const foe = enemyOf(state.turn);
+  state.turn = foe;
+  state.mana[state.turn] += 1;
+  state.action = 'place';
+  state.selected = null;
+  render();
+}
+
+function applyAction(i) {
+  if (state.winner || !canAfford(state.action)) return;
+  const me = state.turn;
+  const foe = enemyOf(me);
+  const cell = state.board[i];
+
+  if (state.action === 'place') {
+    if (!place(i)) return;
+    consume('place');
+    log(`${me} поставил знак.`);
+  } else if (state.action === 'shield') {
+    if (cell.owner !== me) return;
+    cell.shield = 1;
+    consume('shield');
+    log(`${me} активировал щит.`);
+  } else if (state.action === 'freeze') {
+    if (cell.owner !== foe) return;
+    cell.frozen = 1;
+    consume('freeze');
+    log(`${me} заморозил вражеский знак.`);
+  } else if (state.action === 'burn') {
+    if (cell.owner) return;
+    cell.blocked = 1;
+    consume('burn');
+    log(`${me} сжёг клетку на 1 ход.`);
+  } else if (state.action === 'assassinate') {
+    if (cell.owner !== foe) return;
+    const nearAlly = neighbors(i).some(n => state.board[n].owner === foe);
+    if (nearAlly || cell.type === 'sanctuary') return;
+    if (cell.shield) { cell.shield = 0; }
+    else cell.owner = null;
+    consume('assassinate');
+    state.energy[me] += 2;
+    log(`${me} применил убийство.`);
+  } else if (state.action === 'dash') {
+    if (state.selected == null) {
+      if (cell.owner !== me) return;
+      state.selected = i;
+      render();
+      return;
+    }
+    const from = state.selected;
+    const fromCell = state.board[from];
+    if (cell.owner || cell.blocked > 0 || !neighbors(from).includes(i)) return;
+    cell.owner = me;
+    cell.shield = fromCell.shield;
+    fromCell.owner = null; fromCell.shield = 0;
+    state.selected = null;
+    consume('dash');
+    log(`${me} выполнил рывок.`);
+  } else if (state.action === 'ultimate') {
+    const affected = [i, ...neighbors(i).slice(0, 2)];
+    affected.forEach(a => {
+      if (state.board[a].owner === foe) state.board[a].owner = null;
     });
+    consume('ultimate');
+    log(`${me} применил ульту: Метеоритный дождь.`);
+  }
+
+  if (winCheck(me)) {
+    state.winner = me;
+    log(`Победа ${me}!`);
+  } else {
+    state.energy[me] += 1;
+    endTurn();
+  }
+  render();
 }
 
-function createPiece(type) {
-    return shapes[type];
+function render() {
+  hudEl.innerHTML = `
+    <strong>Ход: ${state.turn}</strong><br>
+    Мана X/O: ${state.mana.X} / ${state.mana.O} · Энергия X/O: ${state.energy.X} / ${state.energy.O}
+    ${state.winner ? `<br><strong>Победитель: ${state.winner}</strong>` : ''}
+  `;
+
+  buttons.forEach(btn => {
+    const action = btn.dataset.action;
+    btn.classList.toggle('active', action === state.action);
+    if (action === 'end') return;
+    btn.disabled = state.winner ? true : !canAfford(action) && action !== 'place';
+  });
+
+  boardEl.innerHTML = '';
+  state.board.forEach((cell, i) => {
+    const div = document.createElement('button');
+    div.className = `cell ${cell.type} ${cell.blocked ? 'blocked' : ''} ${state.selected === i ? 'selected' : ''}`;
+    const markClass = cell.owner === 'X' ? 'mark-x' : 'mark-o';
+    const freeze = cell.frozen ? '❄️' : '';
+    const shield = cell.shield ? '🛡️' : '';
+    const curse = cell.cursed ? '☠️' : '';
+    div.innerHTML = `<span class="${markClass}">${cell.owner ?? '·'}</span><small>${freeze}${shield}${curse}</small>`;
+    div.onclick = () => applyAction(i);
+    boardEl.appendChild(div);
+  });
 }
 
-function merge(arena, piece) {
-    piece.matrix.forEach((row, y) => {
-        row.forEach((value, x) => {
-            if (value) {
-                arena[y + piece.pos.y][x + piece.pos.x] = value;
-            }
-        });
-    });
-}
-
-function collide(arena, piece) {
-    for (let y = 0; y < piece.matrix.length; ++y) {
-        for (let x = 0; x < piece.matrix[y].length; ++x) {
-            if (piece.matrix[y][x] !== 0 &&
-                (arena[y + piece.pos.y] &&
-                 arena[y + piece.pos.y][x + piece.pos.x]) !== 0) {
-                return true;
-            }
-        }
-    }
-    return false;
-}
-
-function rotate(matrix) {
-    for (let y = 0; y < matrix.length; ++y) {
-        for (let x = 0; x < y; ++x) {
-            [matrix[x][y], matrix[y][x]] = [matrix[y][x], matrix[x][y]];
-        }
-    }
-    matrix.forEach(row => row.reverse());
-}
-
-function createArena(w, h) {
-    const arena = [];
-    while (h--) {
-        arena.push(new Array(w).fill(0));
-    }
-    return arena;
-}
-
-const arena = createArena(10, 20);
-
-let dropCounter = 0;
-let dropInterval = 1000;
-let lastTime = 0;
-
-function playerDrop() {
-    player.pos.y++;
-    if (collide(arena, player)) {
-        player.pos.y--;
-        merge(arena, player);
-        resetPlayer();
-        arenaSweep();
-    }
-    dropCounter = 0;
-}
-
-function playerMove(dir) {
-    player.pos.x += dir;
-    if (collide(arena, player)) {
-        player.pos.x -= dir;
-    }
-}
-
-function playerRotate() {
-    const pos = player.pos.x;
-    rotate(player.matrix);
-    let offset = 1;
-    while (collide(arena, player)) {
-        player.pos.x += offset;
-        offset = -(offset + (offset > 0 ? 1 : -1));
-        if (offset > player.matrix[0].length) {
-            rotate(player.matrix);
-            player.pos.x = pos;
-            return;
-        }
-    }
-}
-
-function arenaSweep() {
-    outer: for (let y = arena.length - 1; y >= 0; --y) {
-        for (let x = 0; x < arena[y].length; ++x) {
-            if (arena[y][x] === 0) {
-                continue outer;
-            }
-        }
-        const row = arena.splice(y, 1)[0].fill(0);
-        arena.unshift(row);
-        ++y;
-    }
-}
-
-function draw() {
-    context.fillStyle = '#fdfdfd';
-    context.fillRect(0, 0, canvas.width, canvas.height);
-
-    drawMatrix(arena, {x: 0, y: 0}, '#cccccc');
-    drawMatrix(player.matrix, player.pos, colors[player.type]);
-}
-
-function update(time = 0) {
-    const deltaTime = time - lastTime;
-    lastTime = time;
-
-    dropCounter += deltaTime;
-    if (dropCounter > dropInterval) {
-        playerDrop();
-    }
-
-    draw();
-    requestAnimationFrame(update);
-}
-
-document.addEventListener('keydown', event => {
-    if (event.key === 'ArrowLeft') {
-        playerMove(-1);
-    } else if (event.key === 'ArrowRight') {
-        playerMove(1);
-    } else if (event.key === 'ArrowDown') {
-        playerDrop();
-    } else if (event.key === 'ArrowUp') {
-        playerRotate();
-    }
+buttons.forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (btn.dataset.action === 'end') return endTurn();
+    state.action = btn.dataset.action;
+    state.selected = null;
+    render();
+  });
 });
 
-function resetPlayer() {
-    const pieces = 'TJLOSZI';
-    player.type = pieces[pieces.length * Math.random() | 0];
-    player.matrix = createPiece(player.type);
-    player.pos.y = 0;
-    player.pos.x = (arena[0].length / 2 | 0) -
-                   (player.matrix[0].length / 2 | 0);
-    if (collide(arena, player)) {
-        arena.forEach(row => row.fill(0));
-    }
-}
-
-const player = {
-    pos: {x: 0, y: 0},
-    matrix: null,
-    type: 'I'
-};
-
-resetPlayer();
-update();
+setupSpecialCells();
+log('Матч начался. Соберите 4 в ряд на поле 5×5.');
+render();

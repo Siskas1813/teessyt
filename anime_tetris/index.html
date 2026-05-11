@@ -2,12 +2,36 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anime Tetris</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Rune Tac-Toe: Duel of Sigils</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <canvas id="gameCanvas"></canvas>
+    <main class="app">
+        <header class="topbar">
+            <h1>Rune Tac-Toe</h1>
+            <p>Duel of Sigils · поле 5×5 · 4 в ряд</p>
+        </header>
+
+        <section class="hud" id="hud"></section>
+
+        <section class="board-wrap">
+            <div id="board" class="board" aria-label="Игровое поле"></div>
+        </section>
+
+        <section class="controls">
+            <button data-action="place">Поставить знак</button>
+            <button data-action="shield">Щит (1)</button>
+            <button data-action="freeze">Заморозка (2)</button>
+            <button data-action="burn">Огненный шар (2)</button>
+            <button data-action="dash">Рывок (2)</button>
+            <button data-action="assassinate">Убийство (3)</button>
+            <button data-action="ultimate">Ульта (7⚡)</button>
+            <button data-action="end">Закончить ход</button>
+        </section>
+
+        <section class="log" id="log"></section>
+    </main>
     <script src="main.js"></script>
 </body>
 </html>

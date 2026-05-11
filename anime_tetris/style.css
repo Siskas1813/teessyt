@@ -1,15 +1,92 @@
-body {
-    margin: 0;
-    padding: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    background-color: #f9f0ff;
-    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+:root {
+    color-scheme: dark;
+    --bg: #0f1020;
+    --panel: #1a1c35;
+    --accent: #ff8a3d;
+    --ice: #52b8ff;
+    --light: #7ef6b7;
+    --text: #eceeff;
 }
 
-#gameCanvas {
-    background-color: #fdfdfd;
-    box-shadow: 0 0 10px rgba(0,0,0,0.3);
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    background: radial-gradient(circle at top, #26295a, var(--bg));
+    color: var(--text);
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+}
+
+.app {
+    max-width: 520px;
+    margin: 0 auto;
+    min-height: 100dvh;
+    padding: 12px;
+    display: grid;
+    gap: 10px;
+}
+
+.topbar h1 { margin: 0; font-size: 1.3rem; }
+.topbar p { margin: 2px 0 0; opacity: 0.8; font-size: 0.85rem; }
+
+.hud, .controls, .log {
+    background: color-mix(in oklab, var(--panel), black 12%);
+    border: 1px solid #3a3f70;
+    border-radius: 10px;
+    padding: 8px;
+}
+
+.board-wrap { display: grid; place-items: center; }
+
+.board {
+    width: min(92vw, 460px);
+    aspect-ratio: 1;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+}
+
+.cell {
+    border: 1px solid #4a4f85;
+    border-radius: 10px;
+    background: #141736;
+    display: grid;
+    place-items: center;
+    font-size: clamp(18px, 4vw, 28px);
+    user-select: none;
+    min-height: 56px;
+}
+
+.cell.mana { box-shadow: inset 0 0 0 2px #9970ff; }
+.cell.sanctuary { box-shadow: inset 0 0 0 2px #ffd96f; }
+.cell.portal { box-shadow: inset 0 0 0 2px #4bf3e0; }
+.cell.cursed { box-shadow: inset 0 0 0 2px #ff5ca8; }
+.cell.selected { outline: 2px solid #fff; }
+.cell.blocked { opacity: 0.45; }
+
+.mark-x { color: #ff8a3d; }
+.mark-o { color: #62c7ff; }
+
+.controls {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+}
+
+button {
+    border: 1px solid #5056a2;
+    border-radius: 8px;
+    background: #232754;
+    color: var(--text);
+    padding: 10px 8px;
+    font-weight: 600;
+}
+
+button.active { background: #39419b; border-color: #89a3ff; }
+button:disabled { opacity: 0.45; }
+
+.log {
+    max-height: 150px;
+    overflow: auto;
+    font-size: 0.85rem;
 }
